@@ -16,5 +16,3 @@ Folders:
     Scripts (R) associated with analysing monkey datasets split by individal and combined datasets
   c. Mouse
     Scripts (R) associated with analysing mouse datasets split by individal and combined datasets
-
-3. Objects: Merged Seurat Objects used for Analysis.
