@@ -1,0 +1,241 @@
+HUMAN DATASETS
+
+  >Zhou et al 2019
+    took deposited TXTs with barcodes to construct barcode whitelist (whitelist.txt, make sure any spaces are removed before line breaks). Organized all read_1’s into one folder. Ran:
+      for i in *_1.fastq.gz;  
+      do name=(`basename "$i" _1.fastq.gz`); 
+      cutadapt -g TGGTATCAACGCAGAGTACATGGG -j 0 -o ${name}_1_trimmed.fastq.gz ${name}_1.fastq.gz; 
+      done 
+    on Ubuntu bash.
+    Then, to convert h5ad files to csvs, Ran:
+      for i in ./*;  
+      do name=(`basename "$i"`); 
+      python /home/bailey/Zhou_matrix_to_csv.py ${name};
+      done 
+    The py script ran above is as follows:
+      import anndata
+      import pandas as pd
+      import scanpy as sc
+      import spicy
+      import stats
+      import loompy
+      import sys
+
+      print(sys.argv[1])
+      adata=anndata.read_h5ad('./{}/out/counts_unfiltered/adata.h5ad'.format(sys.argv[1]))
+      adata.var["gene_id"]=adata.var.index.values
+      t2g=pd.read_csv('../ref/t2g.txt', header=None, names=["tid", "gene_id", "gene_name"], sep="\t")
+      del t2g["tid"]
+      t2g = t2g.drop_duplicates()
+      t2g.index = t2g.gene_id.values
+      adata.var["gene_name"] = adata.var.gene_id.map(t2g["gene_name"])
+      adata.var.index=adata.var["gene_name"]
+      print(adata.var)
+
+      ids=pd.read_csv('./{}/barcode_id.txt'.format(sys.argv[1]), header=None, names=["barcode", "cell_id"], sep=" \t")
+      ids.index=ids.barcode.values
+      adata.obs["barcode"]=adata.obs.index.values
+      adata.obs["cell_id"]=adata.obs["barcode"].map(ids["cell_id"])
+      adata.obs.index=adata.obs["cell_id"]
+      print(adata.obs)
+
+      adata._X=adata.X
+      adata.write_csvs('/mnt/c/Users/baile/desktop/Zhou/trimmed/{}'.format(sys.argv[1]), skip_data=False)
+
+      print('{} done'.format(sys.argv[1]))
+    Then, ran each set of .csvs through R to merge into single large Seurat object. Filtered final table based on cells used in Zhou paper (~3000 cells).
+  
+  >Xiang 2020
+    Reads were not trimmed.
+    Created a batch file for kallisto formatted as cell_ID/read_1/read_2. Using kallisto, used kallisto pseudo --quant for smartseq2 on batch file.
+      kallisto psuedo --quant - i ../GRCh38.idx -o ../out =-b ../Xiang_batch.txt -t 16
+  
+  >Petropoulos 2016
+    Reads were not trimmed.
+    Single end reads, so kallisto needs to be given an average read length and standard deviation. These were obtained from checking the outputs from FastQC.
+      kallisto pseudo --quant -i ../GRCh38.idx -o ../out -b/Petropoulos_batch.txt --single -l 43 -s 1.5 -t 16
+  
+  >Blakeley 2015
+    These are paired-end 50bp SMARTer-seq reads.
+      kallisto pseudo --quant -i ../GRCh38.idx -o ../out -b ../Blakely_batch.txt -t 16
+      
+      
+MONKEY DATASETS
+
+  >Ma 2019
+    Trimmed read 1 for TSO and poly A tail (6 consecutive A or longer) as described in original methods.
+      for i in *_1.fastq.gz;  
+      do name=(`basename "$i" _1.fastq.gz`); 
+      cutadapt -g AAGCAGTGGTATCAACGCAGAGTACAG -a AAAAAA -j 0 -o ${name}_1_trimmed.fastq.gz ${name}_1.fastq.gz; 
+      done 
+    Sorted files into respective folders per sample. Ran:
+      for i in ./*;  
+      do name=(`basename "$i"`); 
+      kb count -o ./${name}/out --verbose -i ../Cyn_5.0_index.idx -g ../Cyn_5.0_t2g.txt -x 1,0,8:1,8,16:0,0,0 -m 2G --h5ad ./${name}/${name}_1_trimmed.fastq.gz ./${name}/${name}_2.fastq.gz;
+      done 
+      
+  >Yang 2021
+    Downloaded only wild type files from the ENA. Sorted into folders by age. Ran:
+      for i in ./*;  
+      do name=(`basename "$i"`); 
+      kb count -o ../out/${name}/ --verbose -i ../Cyn_5.0_index.idx -g ../Cyn_5.0_t2g.txt -x 10xv3 ./${name}/*.fastq.gz;
+      done 
+  
+  >Nakamura 2016
+    Not realigned. SoliD sequencer used in original paper limits which realigners can handle the data. Instead, the older genome reference build (5.0) was used here for the above alignements to match the build used in this paper.
+ 
+ 
+ MOUSE DATASETS
+ 
+  >Deng 2014
+    Reads were not trimmed. Single end reads.
+      kallisto pseudo --quant -i ../GRCm39.idx -o ../out -b ../Deng_batch.txt --single -l 43 -s 1.5 -t 16
+      
+  >Mohammed 2017
+    Reads were not trimmed.
+      kallisto pseudo --quant -i ../GRCm39.idx -o ../out -b ../Mohammed_batch.txt
+   
+  >Cheng 2019
+    Reads were not trimmed. Single end reads.
+      kallisto psuedo --quant -i ../GRCm39.idx -o ../out -b ../Cheng_batch.txt --single -l 43 -s 1.5 -t 16
+      
+  >Pijuan Sala 2019
+    Created a basename.txt file with a list of base names for all of the samples. Then ran:
+      for word in $(cat ../Pijuan_Sala_fastq_basename.txt); do name=(`basename "$word"`); kb count -i /mnt/e/raw_sequencing_files/GRCm39.idx 
+      -g /mnt/e/raw_sequencing_files/GRCm38_t2g.txt -x 10xv1 -o ../out/${name} ${name}_R2_001.fastq.gz ${name}_R3_001.fastq.gz ${name}_R1_001.fastq.gz; done
+    sorted outputs into samples 1-33 folders. Then ran
+      for i in /mnt/e/raw_sequencing_files/pijuan_sala/out/Sample_1/2*; do name=(`basename "$i"`); python /mnt/d/jupyter_notebooks/pijuan_sala_processing.py Sample_1 ${name}; done
+    For each sample - changing the two sample denotations each time.
+    the pijuan_sala_processing.py file is as follows:
+      import anndata
+      import pandas as pd
+      import numpy as np
+      import matplotlib.pyplot as plt
+      import matplotlib as mpl
+      import matplotlib.patches as mpatches
+      import scanpy as sc
+      from scipy import stats
+      import loompy
+      import os
+      import sys
+
+      from collections import OrderedDict
+      from sklearn.decomposition import TruncatedSVD
+      from sklearn.manifold import TSNE
+      from sklearn.preprocessing import scale
+
+      from sklearn.cluster import KMeans
+      from sklearn.preprocessing import normalize
+      from sklearn.preprocessing import LabelEncoder
+      from sklearn.neighbors import NeighborhoodComponentsAnalysis
+      from matplotlib import cm
+      from matplotlib.lines import Line2D
+      from kb_python.utils import import_matrix_as_anndata
+      from kb_python.constants import ADATA_PREFIX
+
+      def nd(arr):
+          return np.asarray(arr).reshape(-1)
+
+      import warnings
+      warnings.filterwarnings('ignore')
+
+      os.chdir('/mnt/e/raw_sequencing_files/pijuan_sala/out')
+      print('{}'.format(sys.argv[1]))
+      os.chdir('./{}'.format(sys.argv[1]))
+ 
+      t2g = pd.read_csv("../GRCm38_t2g.txt", header=None, names=["tid", "gene_id", "gene_name",  "gene_variant", "chr", "start", "end", "strand"], sep="\t")
+      del t2g["tid"]
+      del t2g["gene_variant"]
+      del t2g["chr"]
+      del t2g ["start"]
+      del t2g ["end"]
+      del t2g["strand"]
+      t2g = t2g.drop_duplicates()
+      t2g.index = t2g.gene_id.values
+
+      adata=import_matrix_as_anndata("{}/counts_unfiltered/cells_x_genes.mtx".format(sys.argv[2]), "{}/counts_unfiltered/cells_x_genes.barcodes.txt".format(sys.argv[2]),"{}/counts_unfiltered/cells_x_genes.genes.txt".format(sys.argv[2]))
+      adata.var['gene_id']=adata.var.index
+      adata.var["gene_name"] = adata.var.gene_id.map(t2g["gene_name"])
+      adata.var.index=adata.var["gene_name"]
+
+      adata.obs["cell_counts"] = nd(adata.X.sum(axis=1))
+      adata.var["gene_counts"] = nd(adata.X.sum(axis=0))
+
+      adata.obs["n_genes"] = nd((adata.X>0).sum(axis=1))
+      adata.var["n_cells"] = nd((adata.X>0).sum(axis=0))
+
+      mito_genes = adata.var["gene_name"].str.startswith('mt-')
+      adata.obs["percent_mito"] = nd(adata[:,mito_genes].X.sum(axis=1)/adata.X.sum(axis=1)*100)
+      sc.pp.filter_cells(adata, min_counts=500)
+
+      del adata.var['gene_name']
+
+      adata.write('adatas/{}.h5ad'.format(sys.argv[2]))
+      print('{} done'.format(sys.argv[2]))
+    Last, the 33 .h5ad adata objects were concatenated as follows:     
+      import anndata
+      import pandas as pd
+      import numpy as np
+      import matplotlib.pyplot as plt
+      import matplotlib as mpl
+      import matplotlib.patches as mpatches
+      import scanpy as sc
+      from scipy import stats
+      import scipy
+      import loompy
+      import os
+      import sys
+
+      from collections import OrderedDict
+      from sklearn.decomposition import TruncatedSVD
+      from sklearn.manifold import TSNE
+      from sklearn.preprocessing import scale
+
+      from sklearn.cluster import KMeans
+      from sklearn.preprocessing import normalize
+      from sklearn.preprocessing import LabelEncoder
+      from sklearn.neighbors import NeighborhoodComponentsAnalysis
+      from matplotlib import cm
+      from matplotlib.lines import Line2D
+      from kb_python.utils import import_matrix_as_anndata
+      from kb_python.constants import ADATA_PREFIX
+
+      def nd(arr):
+          return np.asarray(arr).reshape(-1)
+
+      import warnings
+      warnings.filterwarnings('ignore')
+
+
+      os.chdir('/mnt/e/raw_sequencing_files/pijuan_sala/out')
+      print('{}'.format(sys.argv[1]))
+      os.chdir('./{}/adatas'.format(sys.argv[1]))
+      print(os.listdir())
+
+      adatas=os.listdir()
+
+      d={}
+
+      for ad in adatas:
+          d['adata_{0}'.format(ad)]=anndata.read_h5ad("{0}".format(ad))
+          d['adata_{0}'.format(ad)].var_names_make_unique()
+
+      for i, ad in enumerate(d):
+          if i==0:
+              print(i, 'first')
+              adata=d[ad]
+          else:
+              print(i, 'others')
+              adata=adata.concatenate(d[ad], index_unique=None)
+
+      print(adata)
+
+      adata._X=adata.X
+
+      adata.write_csvs('/mnt/d/realigning_for_int/mouse/pijuan_sala/matrices/{}'.format(sys.argv[1]), skip_data=True)
+      scipy.io.mmwrite('/mnt/d/realigning_for_int/mouse/pijuan_sala/matrices/{}/matrix.mtx'.format(sys.argv[1]), adata.X)
+
+      print('{} done'.format(sys.argv[1]))
+      
+      
+      
