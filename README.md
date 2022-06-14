@@ -5,7 +5,7 @@ This repository houses the code and objects associated with the manuscript 'Dyna
 
 Folders:
 
-1. Realignment: Files used and word document with command line functions. Run on ubuntu terminal with python installation.
+1. Realignment_Files: Files used and word document with command line functions. Run on ubuntu terminal with python installation.
   a. Overview file with all information about what was done to realign
   b. transcript to gene mapping files used for all three species
 
@@ -17,4 +17,4 @@ Folders:
   c. Mouse
     Scripts (R) associated with analysing mouse datasets split by individal and combined datasets
 
-3. Merged Seurat Objects
+3. Objects: Merged Seurat Objects used for Analysis.
