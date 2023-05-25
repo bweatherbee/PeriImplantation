@@ -228,3 +228,45 @@ write.csv(te_stages, 'tables/TE_stages_DEGs.csv')
 
 average_expression<-as.data.frame(AverageExpression(merged, assays='SCT', add.ident='stage'))
 write.csv(average_expression, 'tables/human_avgSCTExpression_stage_celltype.csv')
+
+
+#### Checking for preservation of previously reported subclusters ####
+DefaultAssay(merged)<-'integrated'
+Hypo<-subset(merged, idents='HYPO')
+DimPlot(Hypo) + xlim(c(-10,-6))+ylim(c(-7.5, -4))
+
+DefaultAssay(Hypo)<-'SCT'
+p1<-FeaturePlot(Hypo, features = c('LEFTY1'), min.cutoff = 'q10', max.cutoff = 'q98', order=T, pt.size = 1.2)+ xlim(c(-10,-6))+ylim(c(-7.5, -4))
+p2<-FeaturePlot(Hypo, features = c('LEFTY2'), min.cutoff = 'q10', max.cutoff = 'q98', order=T, pt.size = 1.2)+ xlim(c(-10,-6))+ylim(c(-7.5, -4))
+p3<-FeaturePlot(Hypo, features = c('NOG'), min.cutoff = 'q10', max.cutoff = 'q98', order=T, pt.size = 1.2)+ xlim(c(-10,-6))+ylim(c(-7.5, -4))
+
+
+DefaultAssay(Hypo)<-'UMI_qumi'
+Hypo<-NormalizeData(Hypo, normalization.method = 'LogNormalize')
+p4<-FeaturePlot(Hypo, features = c('CER1'), min.cutoff = 'q10', max.cutoff = 'q98', order=T, pt.size = 1.2)+ xlim(c(-10,-6))+ylim(c(-7.5, -4))
+
+p1+p2+p3+p4
+
+DefaultAssay(Hypo)<-'integrated'
+Hypo <- FindNeighbors(object = Hypo, reduction='pca', dims=1:50)
+Hypo <- FindClusters(Hypo,res=0.3)
+
+DimPlot(Hypo, pt.size=2)+ xlim(c(-10,-6))+ylim(c(-7.5, -4))
+
+DefaultAssay(Hypo)<-'SCT'
+Hypo<-PrepSCTFindMarkers(Hypo)
+test<-FindAllMarkers(Hypo, assay='SCT', only.pos=T)
+
+DimPlot(Hypo, group.by='paper', pt.size=2)+ xlim(c(-10,-6))+ylim(c(-7.5, -4))
+
+
+DefaultAssay(merged)<-'UMI_qumi'
+merged<-NormalizeData(merged, normalization.method = 'LogNormalize')
+FeaturePlot(merged, features=c('ISL1'), order=T, pt.size=2) + xlim(c(-12, -7)) +ylim(c(-2, 3))
+
+Epi<-subset(merged, idents='EPI')
+
+DimPlot(Epi, group.by='cell_type')+ xlim(c(-12, -7)) +ylim(c(-2, 3))
+
+merged$cell_type<-factor(merged$cell_type)
+DimPlot(merged, cells.highlight = rownames(subset(merged, subset=cell_type=='PSA-EPI')@meta.data))
