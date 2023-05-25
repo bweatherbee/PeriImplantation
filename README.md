@@ -1,11 +1,11 @@
 # PeriImplantation
 Combined Analysis of Human, Cynomolgus Monkey and Mouse embryos from blastocyst to gastrula stage
 
-This repository houses the code and objects associated with the manuscript 'Dynamic morphogen signalling during in vitro implantation of the human embryo.'
+This repository houses the code and objects associated with the manuscript 'Distinct pathways drive anterior hypoblast specification in the implanting human embryo.'
 
 Folders:
 
-1. Realignment_Files: Files used and word document with command line functions. Run on ubuntu terminal with python installation.
+1. Realignment_Files: Files used and document with command line functions. Run on ubuntu terminal with python installation.
   a. Overview file with all information about what was done to realign
   b. transcript to gene mapping files used for all three species
 
