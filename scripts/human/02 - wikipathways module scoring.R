@@ -693,3 +693,26 @@ plot_measure(dataset = merged,
              group_by = "stage",
              split_by = "new_cell_type",
              pal_setup = "Pastel1")+theme_bw()
+
+#### Stacked Vlns of selected Genes ####
+DefaultAssay(merged)<-'SCT'
+
+VlnPlot(merged, features=c('NODAL', 'FOXH1', 'TDGF1', 'PCSK6', 'LEFTY1', 'LEFTY2',
+                           'BMPR1A', 'BMPR1B', 'BMPR2', 'ID1', 'ID2', 'ID3', 'ID4',
+                           'NOTCH1', 'DLL1', 'DLL3', 'JAG1', 'HES1', 'RBPJ',
+                           'FGF2', 'FGF4', 'FGFR1', 'FGFR2', 'FGFR3','FGFR4',
+                           'WNT3', 'WNT5A', 'TCF7', 'TCF7L1', 'TCF7L2', 'LEF1'), group.by='new_cell_type',
+        split.by = 'stage', 
+        cols= RColorBrewer::brewer.pal(4, 'Pastel1'), pt.size=0, stack=T)
+
+DefaultAssay(merged)<-'UMI_qumi'
+merged<-NormalizeData(merged, normalization.method = 'LogNormalize')
+
+VlnPlot(merged, features=c('NODAL', 'FOXH1', 'TDGF1', 'PCSK6', 'LEFTY1', 'LEFTY2',
+                           'BMPR1A', 'BMPR1B', 'BMPR2', 'ID1', 'ID2', 'ID3', 'ID4',
+                           'NOTCH1', 'DLL1', 'DLL3', 'JAG1', 'HES1', 'RBPJ',
+                           'FGF2', 'FGF4', 'FGFR1', 'FGFR2', 'FGFR3','FGFR4',
+                           'WNT3', 'WNT5A', 'TCF7', 'TCF7L1', 'TCF7L2', 'LEF1'), group.by='new_cell_type',
+        split.by = 'stage', 
+        cols= RColorBrewer::brewer.pal(4, 'Pastel1'), pt.size=0, stack=T)
+
