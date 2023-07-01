@@ -1,7 +1,7 @@
 # PeriImplantation
 Combined Analysis of Human, Cynomolgus Monkey and Mouse embryos from blastocyst to gastrula stage
 
-This repository houses the code and objects associated with the manuscript 'Distinct pathways drive anterior hypoblast specification in the implanting human embryo.'
+This repository houses the code and objects associated with the analysis of previously published in vitro cultured peri-implantation human embryo datasets.
 
 Folders:
 
